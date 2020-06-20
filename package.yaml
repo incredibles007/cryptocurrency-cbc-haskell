@@ -1,0 +1,52 @@
+name:                crypto-cbc
+version:             0.1.0.0
+github:              "ocheron/crypto-cbc"
+license:             BSD3
+author:              "Olivier Chéron"
+maintainer:          "olivier.cheron@gmail.com"
+copyright:           "2020 Olivier Chéron"
+
+extra-source-files:
+- README.md
+
+synopsis:            CBC padding in constant time
+category:            Web
+description: |
+    An attempt to extend @cryptonite@ hash implementations in order to process
+    CBC-padded messages in constant time.
+
+dependencies:
+- base >= 4.7 && < 5
+- bytestring
+- memory >= 0.14.18
+
+library:
+  source-dirs: src
+  exposed-modules:
+  - Crypto.Hash
+  - Crypto.Hash.Algorithms
+  dependencies:
+  - basement >= 0.0.6
+  cc-options:      -Wall
+  ghc-options:
+  - -Wall
+  include-dirs:    cbits
+  c-sources:
+  - cbits/cryptonite_md5.c
+  - cbits/cryptonite_sha1.c
+  - cbits/cryptonite_sha256.c
+  - cbits/cryptonite_sha512.c
+
+tests:
+  crypto-cbc-test:
+    main:                Tests.hs
+    source-dirs:         tests
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - crypto-cbc
+    - tasty
+    - tasty-hunit
+    - tasty-quickcheck

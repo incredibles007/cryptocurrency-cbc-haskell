@@ -1,0 +1,4 @@
+.stack-work/
+*~
+crypto-cbc.cabal
+stack.yaml.lock
