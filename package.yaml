@@ -23,6 +23,7 @@ dependencies:
 library:
   source-dirs: src
   exposed-modules:
+  - Crypto.CBC
   - Crypto.Hash
   - Crypto.Hash.Algorithms
   dependencies:

@@ -38,11 +38,17 @@ newtype ArbitraryBS0_2901 = ArbitraryBS0_2901 ByteString
 instance Arbitrary ArbitraryBS0_2901 where
     arbitrary = ArbitraryBS0_2901 `fmap` arbitraryBSof 0 2901
 
+newtype Int0_131 = Int0_131 Int
+    deriving (Show,Eq,Ord)
+
 newtype Int0_2901 = Int0_2901 Int
     deriving (Show,Eq,Ord)
 
 newtype Int1_2901 = Int1_2901 Int
     deriving (Show,Eq,Ord)
+
+instance Arbitrary Int0_131 where
+    arbitrary = Int0_131 `fmap` choose (0,131)
 
 instance Arbitrary Int0_2901 where
     arbitrary = Int0_2901 `fmap` choose (0,2901)
