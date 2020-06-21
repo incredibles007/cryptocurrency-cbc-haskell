@@ -9,6 +9,7 @@
 --
 module Crypto.Hash.Algorithms
     ( HashAlgorithm
+    , HashAlgorithmPrefix
     -- * Hash algorithms
     , MD5(..)
     , SHA1(..)
@@ -18,7 +19,7 @@ module Crypto.Hash.Algorithms
     , SHA512(..)
     ) where
 
-import           Crypto.Hash.Types (HashAlgorithm)
+import           Crypto.Hash.Types (HashAlgorithm, HashAlgorithmPrefix)
 import           Crypto.Hash.MD5
 import           Crypto.Hash.SHA1
 import           Crypto.Hash.SHA224
