@@ -58,16 +58,16 @@ void CRYPTONITE_HASHED(finalize_prefix)(struct HASHED_LOWER(ctx) *ctx, const uin
 
 		/* Take as many bytes from the input buffer as possible */
 		if (pos < len)
-			b = *(data++) & (u_int8_t) constant_time_lt(pos, n);
+			b = *(data++) & (uint8_t) constant_time_lt(pos, n);
 		else
 			b = 0;
 
 		/* First padding byte */
-		b |= 0x80 & (u_int8_t) constant_time_eq(pos, n);;
+		b |= 0x80 & (uint8_t) constant_time_eq(pos, n);;
 
 		/* Size bytes are always at the end of a block */
 		if (index >= cut_off)
-			b |= p[index - cut_off] & (u_int8_t) constant_time_ge(pos, n + padlen);
+			b |= p[index - cut_off] & (uint8_t) constant_time_ge(pos, n + padlen);
 
 		/* Store this byte into the buffer */
 		ctx->buf[index++] ^= b;
