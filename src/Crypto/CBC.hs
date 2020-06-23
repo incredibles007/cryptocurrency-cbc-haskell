@@ -11,10 +11,13 @@
 {-# LANGUAGE BangPatterns #-}
 module Crypto.CBC
     ( segment
+    , ssl
+    , tls
     ) where
 
 import           Crypto.Internal.ByteArray (ByteArray, ByteArrayAccess)
 import qualified Crypto.Internal.ByteArray as B
+import           Crypto.Internal.Compat (unsafeDoIO)
 import           Crypto.Internal.Imports
 
 import Data.Bits
@@ -92,3 +95,82 @@ segment bs offset len =
     B.allocAndFreeze len $ \dst ->
         B.withByteArray bs $ \src ->
             copyOffset src (B.length bs) offset dst len
+
+-- | Verify that the given bytearray is correctly padded, with SSL conventions:
+--
+-- * The bytearray length must be large enough to hold all padding bytes plus an
+--   additional @macSize@.
+--
+-- * The padding content can be arbitrary but the length must be minimal, i.e.
+--   less than the specified @blockSize@.
+--
+-- When the bytearray is not large enough to hold @macSize@ bytes for any
+-- padding length, the function returns @Nothing@.
+--
+-- Otherwise the function returns the validity status of the padding, and a
+-- position in the bytearray where the padding starts.  When the padding is not
+-- correctly formatted or not does allow to hold @macSize@ bytes, an arbitrary
+-- position is returned.  The caller is supposed to execute normal integrity
+-- checks based on this position before failing.  This prevents Vaudenay-style
+-- attacks.
+ssl :: ByteArrayAccess ba => Int -> ba -> Int -> Maybe (Bool, Int)
+ssl blockSize bs macSize
+    | len <= macSize = Nothing
+    | otherwise      = unsafeDoIO $ B.withByteArray bs $ \p -> do
+        finalByte <- peekByteOff p (len - 1) :: IO Word8
+        let paddingLength = fromIntegral finalByte
+            t1 = fromIntegral len - (paddingLength + 1) - fromIntegral macSize
+                 -- (1) macSize + paddingLength + 1 <= len
+            t2 = fromIntegral blockSize - (paddingLength + 1)
+                 -- (2) paddingLength + 1 <= blockSize
+            bad = msb t1 .|. msb t2
+            !pos   = len - 1 - fromIntegral (paddingLength .&. isZero bad)
+            !valid = bad == 0
+        return $ Just (valid, pos)
+  where len = B.length bs
+
+-- | Verify that the given bytearray is correctly padded, with TLS conventions:
+--
+-- * The bytearray length must be large enough to hold all padding bytes plus an
+--   additional @macSize@.
+--
+-- * The padding bytes are all equal, but the length does not need to be minimal
+--   with respect to a block size.
+--
+-- When the bytearray is not large enough to hold @macSize@ bytes for any
+-- padding length, the function returns @Nothing@.
+--
+-- Otherwise the function returns the validity status of the padding, and a
+-- position in the bytearray where the padding starts.  When the padding is not
+-- correctly formatted or not does allow to hold @macSize@ bytes, an arbitrary
+-- position is returned.  The caller is supposed to execute normal integrity
+-- checks based on this position before failing.  This prevents Vaudenay-style
+-- attacks.
+tls :: ByteArrayAccess ba => ba -> Int -> Maybe (Bool, Int)
+tls bs macSize
+    | len <= macSize = Nothing
+    | otherwise      = unsafeDoIO $ B.withByteArray bs $ \p -> do
+        finalByte <- peekByteOff p (len - 1) :: IO Word8
+        let paddingLength = fromIntegral finalByte
+            t1 = fromIntegral len - (paddingLength + 1) - fromIntegral macSize
+                 -- (1) macSize + paddingLength + 1 <= len
+            bad = msb t1
+            toCheck = min 255 (len - 1)  -- not secret
+        loop p paddingLength bad toCheck
+  where
+    len = B.length bs
+
+    loop !p !paddingLength !bad i
+        | i == 0    = finish paddingLength bad  -- reached finalByte
+        | otherwise = do
+            let t = paddingLength - fromIntegral i  -- i <= paddingLength
+                mask = msb (complement t)
+            b <- peekByteOff p (len - 1 - i) :: IO Word8
+            let delta = paddingLength `xor` fromIntegral b
+                bad' = bad .|. (mask .&. delta)
+            loop p paddingLength bad' (i - 1)
+
+    finish paddingLength bad =
+        let !pos = len - 1 - fromIntegral (paddingLength .&. isZero bad)
+            !valid = bad == 0
+         in return $ Just (valid, pos)
