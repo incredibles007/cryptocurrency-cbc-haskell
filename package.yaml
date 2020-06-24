@@ -8,6 +8,10 @@ copyright:           "2020 Olivier Chéron"
 
 extra-source-files:
 - README.md
+- benchs/bench.html
+- benchs/bench.png
+- cbits/*.h
+- cbits/cryptonite_hash_prefix.c
 
 synopsis:            CBC padding in constant time
 category:            Web
