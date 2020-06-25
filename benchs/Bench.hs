@@ -99,11 +99,12 @@ benchCT invalidPadding invalidDigest padLen = bench (show padLen) $
     nf run (generatePadded invalidPadding invalidDigest padLen)
   where
     run bs = CBC.tls bs digestSize >>= \(paddingValid, paddingP) ->
-        let (begin, end) = B.splitAt (B.length bs - 256 - digestSize) bs
+        let (begin, endmac) = B.splitAt (B.length bs - 256 - digestSize) bs
             digestP = paddingP - digestSize
             endLen = digestP - B.length begin
+            end = B.take 255 endmac  -- digest and last padding byte never needed
             computed = hashCT hashAlg begin end endLen
-            extracted = CBC.segment end endLen digestSize :: ByteString
+            extracted = CBC.segment endmac endLen digestSize :: ByteString
             digestValid = computed `constEq` extracted
          in guard (digestValid &&! paddingValid) >> return (B.take digestP bs)
 

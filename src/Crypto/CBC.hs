@@ -113,6 +113,9 @@ segment bs offset len =
 -- position is returned.  The caller is supposed to execute normal integrity
 -- checks based on this position before failing.  This prevents Vaudenay-style
 -- attacks.
+--
+-- When a position is returned, it is always in range [1..256] with respect to
+-- the end of the bytearray.
 ssl :: ByteArrayAccess ba => Int -> ba -> Int -> Maybe (Bool, Int)
 ssl blockSize bs macSize
     | len <= macSize = Nothing
@@ -146,6 +149,9 @@ ssl blockSize bs macSize
 -- position is returned.  The caller is supposed to execute normal integrity
 -- checks based on this position before failing.  This prevents Vaudenay-style
 -- attacks.
+--
+-- When a position is returned, it is always in range [1..256] with respect to
+-- the end of the bytearray.
 tls :: ByteArrayAccess ba => ba -> Int -> Maybe (Bool, Int)
 tls bs macSize
     | len <= macSize = Nothing

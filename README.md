@@ -8,7 +8,8 @@ The diagram below compares the `original` implementation of CBC-mode present in
 several padding lengths, keeping the total length constant.
 
 ![CBC-mode benchmark](benchs/bench.png)
-[full details](benchs/bench.html)
+
+duration in µs, [full criterion report](benchs/bench.html)
 
 Notes:
 
